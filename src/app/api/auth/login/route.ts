@@ -46,12 +46,13 @@ export async function POST(request: NextRequest) {
     if (user.isFirstLogin && !user.isEmailVerified) {
       // Generate and send OTP
       const otp = await createOTP(user.id)
-      await sendOTPEmail(user.email, otp)
+      await sendOTPEmail(user.email, otp ,user.id)
       
       return NextResponse.json({
         requiresOTP: true,
         userId: user.id.toString(),
-        message: 'OTP sent to your email for verification'
+        message: 'OTP sent to your email for verification',
+        email: user.email
       })
     }
 

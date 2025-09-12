@@ -25,10 +25,85 @@ export default function AdminDashboardClient({
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", content: "" });
+  const [validationErrors, setValidationErrors] = useState({
+    username: "",
+    email: "",
+    phoneNumber: "",
+  });
   const router = useRouter();
+
+  // Regex patterns
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[+]?[\d\s\-()]{10,15}$/;
+  const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+  const validateField = (field: string, value: string) => {
+    let error = "";
+    
+    switch (field) {
+      case "username":
+        if (value && !usernameRegex.test(value)) {
+          error = "Username can only contain letters, numbers, and underscores";
+        }
+        break;
+      case "email":
+        if (value && !emailRegex.test(value)) {
+          error = "Please enter a valid email address";
+        }
+        break;
+      case "phoneNumber":
+        if (value && !phoneRegex.test(value)) {
+          error = "Please enter a valid phone number (10-15 digits)";
+        }
+        break;
+    }
+
+    setValidationErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    // For username, filter out invalid characters as user types
+    if (field === "username") {
+      value = value.replace(/[^a-zA-Z0-9_]/g, "");
+    }
+
+    setCreateAnalystForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Validate the field
+    validateField(field, value);
+  };
+
+  const isFormValid = () => {
+    const { username, email, fullName, phoneNumber } = createAnalystForm;
+    const { username: usernameError, email: emailError, phoneNumber: phoneError } = validationErrors;
+    
+    return username && email && fullName && phoneNumber && 
+           !usernameError && !emailError && !phoneError;
+  };
 
   const handleCreateAnalyst = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all fields before submission
+    validateField("username", createAnalystForm.username);
+    validateField("email", createAnalystForm.email);
+    validateField("phoneNumber", createAnalystForm.phoneNumber);
+
+    // Check if form is valid
+    if (!isFormValid()) {
+      setMessage({
+        type: "error",
+        content: "Please fix all validation errors before submitting",
+      });
+      return;
+    }
+
     setLoading(true);
     setMessage({ type: "", content: "" });
 
@@ -44,12 +119,17 @@ export default function AdminDashboardClient({
       if (response.ok) {
         setMessage({
           type: "success",
-          content: `Data Analyst created successfully! Temporary password: ${data.tempPassword}`,
+          content: `Data Analyst created successfully!`,
         });
         setCreateAnalystForm({
           username: "",
           email: "",
           fullName: "",
+          phoneNumber: "",
+        });
+        setValidationErrors({
+          username: "",
+          email: "",
           phoneNumber: "",
         });
       } else {
@@ -117,32 +197,38 @@ export default function AdminDashboardClient({
                 className="space-y-4 max-w-md"
               >
                 
-                <Input
-                  placeholder="Username"
-                  value={createAnalystForm.username}
-                  onChange={(e) =>
-                    setCreateAnalystForm((prev) => ({
-                      ...prev,
-                      username: e.target.value,
-                    }))
-                  }
-                  required
-                  disabled={loading}
-                />
+                 {message.content && (
+                  <Alert variant={message.type === 'success' ? 'default' : 'destructive'}>
+                    <AlertDescription>{message.content}</AlertDescription>
+                  </Alert>
+                )}
 
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={createAnalystForm.email}
-                  onChange={(e) =>
-                    setCreateAnalystForm((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  required
-                  disabled={loading}
-                />
+                <div>
+                  <Input
+                    placeholder="Username"
+                    value={createAnalystForm.username}
+                    onChange={(e) => handleInputChange("username", e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  {validationErrors.username && (
+                    <p className="text-sm text-red-600 mt-1">{validationErrors.username}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={createAnalystForm.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  {validationErrors.email && (
+                    <p className="text-sm text-red-600 mt-1">{validationErrors.email}</p>
+                  )}
+                </div>
 
                 <Input
                   placeholder="Full Name"
@@ -157,20 +243,20 @@ export default function AdminDashboardClient({
                   disabled={loading}
                 />
 
-                <Input
-                  placeholder="Phone Number"
-                  value={createAnalystForm.phoneNumber}
-                  onChange={(e) =>
-                    setCreateAnalystForm((prev) => ({
-                      ...prev,
-                      phoneNumber: e.target.value,
-                    }))
-                  }
-                  required
-                  disabled={loading}
-                />
+                <div>
+                  <Input
+                    placeholder="Phone Number"
+                    value={createAnalystForm.phoneNumber}
+                    onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  {validationErrors.phoneNumber && (
+                    <p className="text-sm text-red-600 mt-1">{validationErrors.phoneNumber}</p>
+                  )}
+                </div>
 
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading || !isFormValid()}>
                   {loading ? "Creating..." : "Create Data Analyst"}
                 </Button>
               </form>

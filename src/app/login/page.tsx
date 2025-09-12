@@ -31,9 +31,10 @@ export default function FuturetekLoginPage() {
 
       const data = await response.json()
 
+      console.log(data)
       if (response.ok) {
         if (data.requiresOTP) {
-          router.push(`/verify-otp?userId=${data.userId}`)
+          router.push(`/verify-otp?email=${data.email}&userId=${data.userId}`)
         } else if (data.requiresPasswordChange) {
           router.push(`/change-password?userId=${data.userId}`)
         } else {

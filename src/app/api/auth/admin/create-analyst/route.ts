@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 7. Return a success response.
     return NextResponse.json({
       success: true,
-      message: 'DATA_ANALYST account created successfully. A temporary password has been sent to their email.',
+      message: 'DATA_ANALYST account created successfully.',
       user: {
         id: userId.toString(),
         username,

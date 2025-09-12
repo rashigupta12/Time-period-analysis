@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Generate and send new OTP
     const otp = await createOTP(user.id)
-    await sendOTPEmail(user.email, otp)
+    await sendOTPEmail(user.email, otp ,user.id)
 
     return NextResponse.json({
       success: true,
