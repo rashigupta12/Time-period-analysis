@@ -237,7 +237,7 @@ export default function AdminDashboardClient({
           setActiveTab("analysts");
           setShowTempPassword(false);
           setTempPassword("");
-        }, 10000);
+        }, 5000);
       } else {
         setMessage({
           type: "error",

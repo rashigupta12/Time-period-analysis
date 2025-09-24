@@ -132,7 +132,7 @@ Regards,
 Futuretek Institute of Astrological Sciences
     `,
     html: `
-      <p>Dear Student,</p>
+      <p>Dear Data Analyst,</p>
       <p>Welcome to the <b>Futuretek Institute of Astrological Sciences</b>!</p>
       <p>Your account has been created successfully. Please use the following credentials to log in:</p>
       <ul>
