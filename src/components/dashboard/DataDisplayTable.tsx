@@ -1,10 +1,23 @@
 // DataDisplayTable.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, ArrowUpDown } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FileText, ArrowUpDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface MarketData {
   date: string;
@@ -13,7 +26,7 @@ interface MarketData {
   high: string;
   low: string;
   close: string;
-  volume: string
+  volume: string;
 }
 
 interface VolatilityData {
@@ -29,9 +42,12 @@ interface DataDisplayTableProps {
   source: string;
 }
 
-export function DataDisplayTable({ data,  source }: DataDisplayTableProps) {
-  console.log(data)
-  const [sortConfig, setSortConfig] = useState<{ key: keyof MarketData; direction: 'ascending' | 'descending' } | null>(null);
+export function DataDisplayTable({ data, source }: DataDisplayTableProps) {
+  console.log(data);
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof MarketData;
+    direction: "ascending" | "descending";
+  } | null>(null);
 
   const sortedData = [...data].sort((a, b) => {
     if (!sortConfig) return 0;
@@ -39,43 +55,59 @@ export function DataDisplayTable({ data,  source }: DataDisplayTableProps) {
     const aValue = a[sortConfig.key];
     const bValue = b[sortConfig.key];
 
-    // Convert to number if possible
+    // Special handling for datetime/date sorting
+    if (sortConfig.key === "datetime" || sortConfig.key === "date") {
+      const aDate = new Date(aValue);
+      const bDate = new Date(bValue);
+
+      if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+        return sortConfig.direction === "ascending"
+          ? aDate.getTime() - bDate.getTime()
+          : bDate.getTime() - aDate.getTime();
+      }
+    }
+
+    // Convert to number if possible (for other numeric columns)
     const aNum = parseFloat(aValue);
     const bNum = parseFloat(bValue);
 
     if (!isNaN(aNum) && !isNaN(bNum)) {
-      return sortConfig.direction === 'ascending' ? aNum - bNum : bNum - aNum;
+      return sortConfig.direction === "ascending" ? aNum - bNum : bNum - aNum;
     }
 
     // Fallback string comparison
-    if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+    if (aValue < bValue) return sortConfig.direction === "ascending" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "ascending" ? 1 : -1;
     return 0;
   });
 
   const requestSort = (key: keyof MarketData) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+    let direction: "ascending" | "descending" = "ascending";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
     }
     setSortConfig({ key, direction });
   };
 
   const getSortIcon = (key: keyof MarketData) => {
     if (!sortConfig || sortConfig.key !== key) return null;
-    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+    return sortConfig.direction === "ascending" ? "▲" : "▼";
   };
 
   // Utility: returns CSS class based on value change
   const getFluctuationClass = (current: string, previous?: string) => {
-    if (!previous) return '';
+    if (!previous) return "";
     const curr = parseFloat(current);
     const prev = parseFloat(previous);
-    if (isNaN(curr) || isNaN(prev)) return '';
+    if (isNaN(curr) || isNaN(prev)) return "";
 
-    if (curr > prev) return 'text-green-600 font-medium';
-    if (curr < prev) return 'text-red-600 font-medium';
-    return '';
+    if (curr > prev) return "text-green-600 font-medium";
+    if (curr < prev) return "text-red-600 font-medium";
+    return "";
   };
 
   return (
@@ -85,23 +117,21 @@ export function DataDisplayTable({ data,  source }: DataDisplayTableProps) {
           <FileText className="h-5 w-5" />
           Market Data
         </CardTitle>
-        <CardDescription>
-          {source}
-        </CardDescription>
+        <CardDescription>{source}</CardDescription>
       </CardHeader>
-      <CardContent className='px-2.5'>
+      <CardContent className="px-2.5">
         <div className="rounded-md  max-h-96 overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-gray-50">
               <TableRow>
-                {['datetime', 'open', 'high', 'low', 'close'].map((header) => (
+                {["date", "open", "high", "low", "close"].map((header) => (
                   <TableHead
                     key={header}
                     className="cursor-pointer select-none"
                     onClick={() => requestSort(header as keyof MarketData)}
                   >
                     <div className="flex items-center gap-1">
-                      {header.charAt(0).toUpperCase() + header.slice(1)}{' '}
+                      {header.charAt(0).toUpperCase() + header.slice(1)}{" "}
                       <ArrowUpDown className="h-3 w-3" />
                       {getSortIcon(header as keyof MarketData)}
                     </div>
@@ -115,7 +145,7 @@ export function DataDisplayTable({ data,  source }: DataDisplayTableProps) {
 
                 return (
                   <TableRow key={index}>
-{/* 
+                    {/* 
 <TableCell>
   {(() => {
     const dateStr = item?.datetime || "";
@@ -143,13 +173,31 @@ export function DataDisplayTable({ data,  source }: DataDisplayTableProps) {
   })()}
 </TableCell> */}
 
-<TableCell > {item.date}</TableCell>
+                    <TableCell> {item.date}</TableCell>
 
-
-                    <TableCell className={getFluctuationClass(item.open, prevRow?.open)}>{item.open}</TableCell>
-                    <TableCell className={getFluctuationClass(item.high, prevRow?.high)}>{item.high}</TableCell>
-                    <TableCell className={getFluctuationClass(item.low, prevRow?.low)}>{item.low}</TableCell>
-                    <TableCell className={getFluctuationClass(item.close, prevRow?.close)}>{item.close}</TableCell>
+                    <TableCell
+                      className={getFluctuationClass(item.open, prevRow?.open)}
+                    >
+                      {item.open}
+                    </TableCell>
+                    <TableCell
+                      className={getFluctuationClass(item.high, prevRow?.high)}
+                    >
+                      {item.high}
+                    </TableCell>
+                    <TableCell
+                      className={getFluctuationClass(item.low, prevRow?.low)}
+                    >
+                      {item.low}
+                    </TableCell>
+                    <TableCell
+                      className={getFluctuationClass(
+                        item.close,
+                        prevRow?.close
+                      )}
+                    >
+                      {item.close}
+                    </TableCell>
                     {/* <TableCell className={getFluctuationClass(item.volume, prevRow?.volume)}>{item.volume}</TableCell> */}
                   </TableRow>
                 );
