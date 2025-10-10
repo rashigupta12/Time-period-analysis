@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-
 // MarketDataDashboard.tsx
 "use client";
 
@@ -27,14 +26,17 @@ import { DataDisplayTable } from "./DataDisplayTable";
 import { GannLevelsTable } from "./GannLevelsTable";
 import CombinedDashboard from "./UploadCard"; // Fixed import
 import { VolatilityAnalysisCard } from "./VolatilityAnalysisCard";
-import { ApiResponse , GannLevel,
+import {
+  ApiResponse,
+  GannLevel,
   MarketData,
   SelectedAsset,
-  VolatilityData, } from "./../../types/Dashobaord";
+  VolatilityData,
+} from "./../../types/Dashobaord";
 
 const SYMBOL_MAP: Record<string, Record<string, string>> = {
   "Precious Metals": {
-    GOLD: "GC=F",       // Gold futures
+    GOLD: "GC=F", // Gold futures
     SILVER: "SI=F",
     PALLADIUM: "PA=F",
     PLATINUM: "PL=F",
@@ -60,9 +62,10 @@ const SYMBOL_MAP: Record<string, Record<string, string>> = {
   },
 };
 
-
 export default function MarketDataDashboard() {
-  const [selectedAsset, setSelectedAsset] = useState<SelectedAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<SelectedAsset | null>(
+    null
+  );
   const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [excelData, setExcelData] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,7 +73,9 @@ export default function MarketDataDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [userCMP, setUserCMP] = useState<number | null>(null);
   const [duration, setDuration] = useState(1);
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
   const [selectedTime, setSelectedTime] = useState<string>("09:00");
 
   const getMultiplier = (price: number): number => {
@@ -97,18 +102,20 @@ export default function MarketDataDashboard() {
       userCMP || parseFloat(displayedData[displayedData.length - 1].close);
     const multiplier = getMultiplier(basePrice);
 
-    const processedData: VolatilityData[] = displayedData.map((item: { close: string; datetime: any; }, index: number) => {
-      const close = parseFloat(item.close) * multiplier;
-      let lnReturn = null;
-      let lnSquared = null;
-      if (index > 0) {
-        const prevClose =
-          parseFloat(displayedData[index - 1].close) * multiplier;
-        lnReturn = Math.log(close / prevClose);
-        lnSquared = Math.pow(lnReturn, 2);
+    const processedData: VolatilityData[] = displayedData.map(
+      (item: { close: string; datetime: any }, index: number) => {
+        const close = parseFloat(item.close) * multiplier;
+        let lnReturn = null;
+        let lnSquared = null;
+        if (index > 0) {
+          const prevClose =
+            parseFloat(displayedData[index - 1].close) * multiplier;
+          lnReturn = Math.log(close / prevClose);
+          lnSquared = Math.pow(lnReturn, 2);
+        }
+        return { date: item.datetime, close, lnReturn, lnSquared };
       }
-      return { date: item.datetime, close, lnReturn, lnSquared };
-    });
+    );
 
     const validReturns = processedData.slice(1).map((d) => d.lnReturn!);
     const validSquared = processedData.slice(1).map((d) => d.lnSquared!);
@@ -147,21 +154,21 @@ export default function MarketDataDashboard() {
       };
     });
 
-   return {
-  processedData,
-  avgLnReturn,
-  avgLnSquared,
-  variance,
-  dailyVolatility,
-  periodVolatility,
-  volatility: periodVolatility,
-  volatilityInPercent,
-  range,
-  upperLimit: upperLimit / multiplier,
-  lowerLimit: lowerLimit / multiplier,
-  currentPrice: latestClose / multiplier,
-  gannLevels,
-};
+    return {
+      processedData,
+      avgLnReturn,
+      avgLnSquared,
+      variance,
+      dailyVolatility,
+      periodVolatility,
+      volatility: periodVolatility,
+      volatilityInPercent,
+      range,
+      upperLimit: upperLimit / multiplier,
+      lowerLimit: lowerLimit / multiplier,
+      currentPrice: latestClose / multiplier,
+      gannLevels,
+    };
   }, [apiData, excelData, userCMP, duration]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,7 +254,7 @@ export default function MarketDataDashboard() {
               low: String(row[3]),
               close: String(row[4]),
               volume: String(row[5] || row[4]),
-              datetime:String(dateValue),
+              datetime: String(dateValue),
             });
           }
         }
@@ -267,146 +274,154 @@ export default function MarketDataDashboard() {
     reader.readAsArrayBuffer(file);
   };
 
-const handleApiFetch = async (category: string, item: string) => {
-  console.log("market dashboard - API fetch:", category, item);
-  if (!category || !item) {
-    setError("Please select a category and item");
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-
-  try {
-    // Map category + item to actual ticker symbol
-    const symbol = SYMBOL_MAP[category]?.[item] || item;
-
-    const token = process.env.NEXT_PUBLIC_APIFY_TOKEN;
-    const actId = "lujI4mrby2M9OV868"; // your Apify actor ID
-
-    // 1️⃣ Trigger a new run
-    const runResponse = await fetch(
-      `https://api.apify.com/v2/acts/${actId}/runs?token=${token}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tickers: [symbol] }), // input for your actor
-      }
-    );
-
-    if (!runResponse.ok) {
-      throw new Error(`Run failed: ${runResponse.status}`);
+  const handleApiFetch = async (category: string, item: string) => {
+    console.log("market dashboard - API fetch:", category, item);
+    if (!category || !item) {
+      setError("Please select a category and item");
+      return;
     }
 
-    const runData = await runResponse.json();
-    const datasetId = runData.data.defaultDatasetId;
+    setLoading(true);
+    setError(null);
 
-    // 2️⃣ Wait for run to finish (polling loop)
-    let runStatus = runData.data.status;
-    const runId = runData.data.id;
+    try {
+      // Map category + item to actual ticker symbol
+      const symbol = SYMBOL_MAP[category]?.[item] || item;
 
-    while (runStatus !== "SUCCEEDED" && runStatus !== "FAILED") {
-      await new Promise((r) => setTimeout(r, 3000)); // wait 3s
-      const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`
+      const token = process.env.NEXT_PUBLIC_APIFY_TOKEN;
+      const actId = "lujI4mrby2M9OV868"; // your Apify actor ID
+
+      // 1️⃣ Trigger a new run
+      const runResponse = await fetch(
+        `https://api.apify.com/v2/acts/${actId}/runs?token=${token}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tickers: [symbol] }), // input for your actor
+        }
       );
-      const statusData = await statusRes.json();
-      runStatus = statusData.data.status;
+
+      if (!runResponse.ok) {
+        throw new Error(`Run failed: ${runResponse.status}`);
+      }
+
+      const runData = await runResponse.json();
+      const datasetId = runData.data.defaultDatasetId;
+
+      // 2️⃣ Wait for run to finish (polling loop)
+      let runStatus = runData.data.status;
+      const runId = runData.data.id;
+
+      while (runStatus !== "SUCCEEDED" && runStatus !== "FAILED") {
+        await new Promise((r) => setTimeout(r, 3000)); // wait 3s
+        const statusRes = await fetch(
+          `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`
+        );
+        const statusData = await statusRes.json();
+        runStatus = statusData.data.status;
+      }
+
+      if (runStatus === "FAILED") {
+        throw new Error("Actor run failed");
+      }
+
+      // 3️⃣ Fetch dataset items
+      const datasetRes = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}`
+      );
+
+      if (!datasetRes.ok) {
+        throw new Error(`Dataset fetch failed: ${datasetRes.status}`);
+      }
+
+      const datasetItems = await datasetRes.json();
+      const tickerData = datasetItems.find((d: any) => d.ticker === symbol);
+
+      if (!tickerData) {
+        throw new Error(`No data found for ${symbol}`);
+      }
+
+      // 4️⃣ Extract OHLC history
+      const history = tickerData.history?.data || [];
+
+      // Determine whether to include today based on current time
+      const now = new Date();
+      const sixPm = new Date();
+      sixPm.setHours(18, 0, 0, 0); // 6:00 PM today
+
+      let filteredHistory = history;
+
+      // If before 6 PM, exclude today (last item if its date is today)
+      if (now < sixPm && history.length > 0) {
+        const lastItem = history[history.length - 1];
+        const lastItemDate = new Date(lastItem.date); // make sure your date field is correct
+        const isToday =
+          lastItemDate.getFullYear() === now.getFullYear() &&
+          lastItemDate.getMonth() === now.getMonth() &&
+          lastItemDate.getDate() === now.getDate();
+
+        if (isToday) {
+          filteredHistory = history.slice(0, -1); // exclude today
+        }
+      }
+
+      const last10 = filteredHistory.slice(-10);
+      const last30 = filteredHistory.slice(-30);
+
+      const cleaned = {
+        ticker: symbol,
+        latestPrice: tickerData.price_info?.current_price,
+        last10Days: last10,
+        last30Days: last30,
+      };
+
+      console.log("cleaned", cleaned);
+
+      // ✅ Create ApiResponse object for state
+      const apiResponse: ApiResponse = {
+        meta: {
+          symbol,
+          interval: "1d", // or whatever your actor provides
+          exchange: "Apify", // you can replace with real exchange if available
+        },
+        values: cleaned.last10Days,
+        status: "success",
+      };
+
+      setApiData(apiResponse);
+      setExcelData([]);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch data");
+    } finally {
+      setLoading(false);
     }
-
-    if (runStatus === "FAILED") {
-      throw new Error("Actor run failed");
-    }
-
-    // 3️⃣ Fetch dataset items
-    const datasetRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}`
-    );
-
-    if (!datasetRes.ok) {
-      throw new Error(`Dataset fetch failed: ${datasetRes.status}`);
-    }
-
-    const datasetItems = await datasetRes.json();
-    const tickerData = datasetItems.find((d: any) => d.ticker === symbol);
-
-    if (!tickerData) {
-      throw new Error(`No data found for ${symbol}`);
-    }
-
-   // 4️⃣ Extract OHLC history
-const history = tickerData.history?.data || [];
-
-// Determine whether to include today based on current time
-const now = new Date();
-const sixPm = new Date();
-sixPm.setHours(18, 0, 0, 0); // 6:00 PM today
-
-let filteredHistory = history;
-
-// If before 6 PM, exclude today (last item if its date is today)
-if (now < sixPm && history.length > 0) {
-  const lastItem = history[history.length - 1];
-  const lastItemDate = new Date(lastItem.date); // make sure your date field is correct
-  const isToday =
-    lastItemDate.getFullYear() === now.getFullYear() &&
-    lastItemDate.getMonth() === now.getMonth() &&
-    lastItemDate.getDate() === now.getDate();
-
-  if (isToday) {
-    filteredHistory = history.slice(0, -1); // exclude today
-  }
-}
-
-const last10 = filteredHistory.slice(-10);
-const last30 = filteredHistory.slice(-30);
-
-const cleaned = {
-  ticker: symbol,
-  latestPrice: tickerData.price_info?.current_price,
-  last10Days: last10,
-  last30Days: last30,
-};
-
-console.log("cleaned", cleaned);
-
-// ✅ Create ApiResponse object for state
-const apiResponse: ApiResponse = {
-  meta: {
-    symbol,
-    interval: "1d",      // or whatever your actor provides
-    exchange: "Apify",   // you can replace with real exchange if available
-  },
-  values: cleaned.last10Days,
-  status: "success",
-};
-
-setApiData(apiResponse);
-setExcelData([]);
-
-  } catch (err) {
-    console.error("Error fetching data:", err);
-    setError(err instanceof Error ? err.message : "Failed to fetch data");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // This function will be called when the child component triggers a category fetch
   const handleCategoryFetchFromChild = (asset?: SelectedAsset) => {
-    console.log("market dashboard - handleCategoryFetchFromChild called with asset:", asset);
-    
+    console.log(
+      "market dashboard - handleCategoryFetchFromChild called with asset:",
+      asset
+    );
+
     // Use the passed asset or fall back to selectedAsset state
     const targetAsset = asset || selectedAsset;
-    
-    if (targetAsset && targetAsset.type === 'category') {
+
+    if (targetAsset && targetAsset.type === "category") {
       // Extract category and item from the asset name
-      const [category, item] = targetAsset.name.split(' - ');
-      console.log("market dashboard - extracted from targetAsset:", category, item);
+      const [category, item] = targetAsset.name.split(" - ");
+      console.log(
+        "market dashboard - extracted from targetAsset:",
+        category,
+        item
+      );
       handleApiFetch(category, item);
     } else {
-      console.log("market dashboard - no valid selectedAsset for category fetch, targetAsset:", targetAsset);
+      console.log(
+        "market dashboard - no valid selectedAsset for category fetch, targetAsset:",
+        targetAsset
+      );
       setError("Please select a category and item");
     }
   };
@@ -414,8 +429,8 @@ setExcelData([]);
   const handleAssetChange = (asset: SelectedAsset | null) => {
     console.log("market dashboard - asset changed:", asset);
     setSelectedAsset(asset);
-    if (asset && asset.type === 'stock') {
-      handleApiFetch('Stock', asset.symbol);
+    if (asset && asset.type === "stock") {
+      handleApiFetch("Stock", asset.symbol);
     }
   };
 
@@ -443,43 +458,51 @@ setExcelData([]);
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-  
+
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
   const displayedData = apiData?.values || excelData;
 
-const handlePrint = () => {
-  const printContent = document.getElementById('printable-content');
-  const originalContents = document.body.innerHTML;
-  
-  if (printContent) {
-    // Create a print-specific version
-    const printContents = printContent.innerHTML;
-    
-    // Create a print window with only the content we want
-    document.body.innerHTML = `
+  const handlePrint = () => {
+    const printContent = document.getElementById("printable-content");
+    const originalContents = document.body.innerHTML;
+
+    if (printContent) {
+      // Create a print-specific version
+      const printContents = printContent.innerHTML;
+
+      // Create a print window with only the content we want
+      document.body.innerHTML = `
       <div style="padding: 20px; font-family: Arial, sans-serif;">
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
           <h1>Market Analysis Report</h1>
-          <p>${selectedAsset ? `Category: ${selectedAsset.type === 'category' ? selectedAsset.name.split(' - ')[0] : 'Stock'}, Item: ${selectedAsset.name}` : 'No asset selected'}</p>
+          <p>${
+            selectedAsset
+              ? `Category: ${
+                  selectedAsset.type === "category"
+                    ? selectedAsset.name.split(" - ")[0]
+                    : "Stock"
+                }, Item: ${selectedAsset.name}`
+              : "No asset selected"
+          }</p>
           <p>Date: ${selectedDate} | Time: ${selectedTime}</p>
           <p>Generated: ${new Date().toLocaleString()}</p>
         </div>
         ${printContents}
       </div>
     `;
-    
-    window.print();
-    
-    // Restore original content
-    document.body.innerHTML = originalContents;
-    
-    // Ensure the page is reloaded properly after printing
-    window.location.reload();
-  }
-};
+
+      window.print();
+
+      // Restore original content
+      document.body.innerHTML = originalContents;
+
+      // Ensure the page is reloaded properly after printing
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-6 py-2">
@@ -522,104 +545,105 @@ const handlePrint = () => {
           </Card>
         )}
 
+        <div id="printable-content">
+          {displayedData.length > 0 && (
+            <div className="mt-6">
+              <DataDisplayTable
+                data={displayedData}
+                volatilityData={volatilityCalculations?.processedData || null}
+                source={
+                  apiData
+                    ? `Showing API data for ${
+                        selectedAsset?.symbol || "selected item"
+                      }`
+                    : "Showing uploaded data"
+                }
+              />
+            </div>
+          )}
 
-<div id="printable-content">
-        {displayedData.length > 0 && (
-          <div className="mt-6">
-            <DataDisplayTable
-  data={displayedData}
-  volatilityData={volatilityCalculations?.processedData || null}
-  source={
-    apiData
-      ? `Showing API data for ${selectedAsset?.symbol || 'selected item'}`
-      : "Showing uploaded data"
-  }
-/>
+          {volatilityCalculations && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <VolatilityAnalysisCard data={volatilityCalculations} />
+              <GannLevelsTable gannLevels={volatilityCalculations.gannLevels} />
+            </div>
+          )}
 
-          </div>
-        )}
-
-        
-
-        {volatilityCalculations && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <VolatilityAnalysisCard data={volatilityCalculations} />
-            <GannLevelsTable gannLevels={volatilityCalculations.gannLevels} />
-          </div>
-        )}
-
-        {volatilityCalculations && (
-          <div className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5" />
-                  Complete Gann Support & Resistance Levels
-                </CardTitle>
-                <CardDescription>
-                  Dynamic levels calculated using volatility and Gann degrees methodology
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border max-h-96 overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Degree</TableHead>
-                        <TableHead>Factor</TableHead>
-                        <TableHead className="text-red-600">Support</TableHead>
-                        <TableHead className="text-green-600">
-                          Resistance
-                        </TableHead>
-                        <TableHead>Importance</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {volatilityCalculations.gannLevels.map((level) => (
-                        <TableRow
-                          key={level.degree}
-                          className={
-                            level.degree % 45 === 0 ? "bg-slate-50" : ""
-                          }
-                        >
-                          <TableCell className="font-medium">
-                            {level.degree}°
-                          </TableCell>
-                          <TableCell>{level.factor.toFixed(3)}</TableCell>
-                          <TableCell className="text-red-600 font-mono">
-                            {level.support.toFixed(4)}
-                          </TableCell>
-                          <TableCell className="text-green-600 font-mono">
-                            {level.resistancePrice.toFixed(4)}
-                          </TableCell>
-                          <TableCell>
-                            {level.degree % 90 === 0 ? (
-                              <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                                Critical
-                              </span>
-                            ) : level.degree % 45 === 0 ? (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                Major
-                              </span>
-                            ) : level.degree === 360 ? (
-                              <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-                                Cycle
-                              </span>
-                            ) : (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                                Minor
-                              </span>
-                            )}
-                          </TableCell>
+          {volatilityCalculations && (
+            <div className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingDown className="h-5 w-5" />
+                    Complete Gann Support & Resistance Levels
+                  </CardTitle>
+                  <CardDescription>
+                    Dynamic levels calculated using volatility and Gann degrees
+                    methodology
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Degree</TableHead>
+                          <TableHead>Factor</TableHead>
+                          <TableHead className="text-red-600">
+                            Support
+                          </TableHead>
+                          <TableHead className="text-green-600">
+                            Resistance
+                          </TableHead>
+                          <TableHead>Importance</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                      </TableHeader>
+                      <TableBody>
+                        {volatilityCalculations.gannLevels.map((level) => (
+                          <TableRow
+                            key={level.degree}
+                            className={
+                              level.degree % 45 === 0 ? "bg-slate-50" : ""
+                            }
+                          >
+                            <TableCell className="font-medium">
+                              {level.degree}°
+                            </TableCell>
+                            <TableCell>{level.factor.toFixed(3)}</TableCell>
+                            <TableCell className="text-red-600 font-mono">
+                              {level.support.toFixed(4)}
+                            </TableCell>
+                            <TableCell className="text-green-600 font-mono">
+                              {level.resistancePrice.toFixed(4)}
+                            </TableCell>
+                            <TableCell>
+                              {level.degree % 90 === 0 ? (
+                                <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                  Critical
+                                </span>
+                              ) : level.degree % 45 === 0 ? (
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                  Major
+                                </span>
+                              ) : level.degree === 360 ? (
+                                <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                                  Cycle
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                  Minor
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>
