@@ -1,3 +1,4 @@
+// pnpm tsx src/index.ts
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/neon-http';
 import bcrypt from 'bcryptjs';
@@ -7,9 +8,9 @@ import { users } from './db/schema';
 const db = drizzle(process.env.DATABASE_URL!);
 
 async function createAdmin() {
-  const email = "admin@example.com";
-  const username = "admin";
-  const plainPassword = "Admin@123"; // change to a secure one
+  const email = "amit.gupta@gennextit.com";
+  const username = "amit_gupta";
+  const plainPassword = "amit.gupta@gennextit"; // change to a secure one
 
   // check if admin already exists
   const existing = await db.select().from(users).where(eq(users.email, email));
